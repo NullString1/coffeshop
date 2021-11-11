@@ -2,6 +2,12 @@ import sqlite3
 from datetime import date, datetime
 from typing import Iterable
 
+#Run to create db
+#CREATE TABLE ProductType(ProductTypeID integer NOT NULL PRIMARY KEY, Description text NOT NULL)
+#CREATE TABLE Product(ProductID integer NOT NULL PRIMARY KEY, Name text NOT NULL, Price real NOT NULL, ProductTypeID integer, FOREIGN KEY(ProductTypeID) REFERENCES ProductType(ProductTypeID))
+#CREATE TABLE OrderItem(OrderItemID integer NOT NULL PRIMARY KEY, OrderID integer NOT NULL, ProductID integer NOT NULL, Quantity integer NOT NULL, FOREIGN KEY(OrderID) REFERENCES CustomerOrder(OrderID), FOREIGN KEY(ProductID) REFERENCES Product(ProductID))
+#CREATE TABLE CustomerOrder(OrderID integer NOT NULL PRIMARY KEY, Date text NOT NULL, Time text NOT NULL, CustomerID integer NOT NULL, FOREIGN KEY(CustomerID) REFERENCES Customer(CustomerID))
+#CREATE TABLE Customer(CustomerID integer NOT NULL PRIMARY KEY, FirstName text NOT NULL, LastName text NOT NULL, Street text NOT NULL, Town text NOT NULL, PostCode text NOT NULL, TelephoneNumber integer NOT NULL, Email text NOT NULL)
 
 class dbi():
     def __init__(self, dbpath: str) -> None:
