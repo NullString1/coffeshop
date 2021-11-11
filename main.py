@@ -1,4 +1,5 @@
 import sqlite3
+from datetime import date, datetime
 from typing import Iterable
 
 
@@ -81,7 +82,7 @@ class dbi():
                 return False
             out = self.query(f"UPDATE {table} SET {change} WHERE {match}")
             self.commit()
-            return False
+            return out
         except Exception as e:
             print(e)
             return False
@@ -108,33 +109,35 @@ class customerController():
             return False
         return self.db.removeFrom("Customer", cols)
 
-    def returnCustomer(self, **cols) -> list:
+    def returnCustomer(self, col="*", **cols) -> list:
         if len(cols) == 0:
             return False
-        return self.db.selectFrom("Customer", cols)
+        cols = {k: v for k, v in cols.items() if v}
+        return self.db.selectFrom("Customer", cols, col=col)
 
     def amendCustomer(self, match: dict, **change) -> bool:
         if len(match) == 0:
             return False
         return self.db.changeRecord("Customer", match, change)
 
+
 class productController():
     def __init__(self, db: dbi) -> None:
         self.db = db
-    
+
     def addProduct(self, name: str, price: float, ptypeid: int) -> bool:
         return self.db.insertInto("Product", (None, name, price, ptypeid))
-    
+
     def deleteProduct(self, **cols) -> bool:
         if len(cols) == 0:
             return False
         return self.db.removeFrom("Product", cols)
-    
+
     def returnProduct(self, **cols) -> list:
         if len(cols) == 0:
             return False
         return self.db.selectFrom("Product", cols)
-    
+
     def amendProduct(self, match: dict, **change) -> bool:
         if len(match) == 0:
             return False
@@ -142,51 +145,52 @@ class productController():
 
     def addProductType(self, description: str) -> bool:
         return self.db.insertInto("ProductType", (None, description))
-    
+
     def deleteProductType(self, **cols) -> bool:
         if len(cols) == 0:
             return False
         return self.db.removeFrom("ProductType", cols)
-    
+
     def returnProductType(self, **cols) -> list:
         if len(cols) == 0:
             return False
         return self.db.selectFrom("ProductType", cols)
-    
+
     def amendProductType(self, match: dict, **change) -> bool:
         if len(match) == 0:
             return False
         return self.db.changeRecord("ProductType", match, change)
 
+
 class orderController():
     def __init__(self, db: dbi) -> None:
         self.db = db
         #self.newOrder = self.addOrder
-    
+
     def newOrder(self, date: str, time: str, customerId: int, products: list) -> bool:
         orderId = self.newCustomerOrder(date, time, customerId).lastrowid
         for product in products:
             quantity = product.pop("quantity")
-            #print(product)
+            # print(product)
             productId = pc.returnProduct(**product)[0][0]
             self.newOrderItem(orderId, productId, quantity)
 
-    def newCustomerOrder(self, date: str, time:str, customerId: int) -> sqlite3.Cursor:
+    def newCustomerOrder(self, date: str, time: str, customerId: int) -> sqlite3.Cursor:
         return self.db.insertInto("CustomerOrder", (None, date, time, customerId))
 
-    def newOrderItem(self, orderId:int, productId: int, quantity: int) -> bool:
+    def newOrderItem(self, orderId: int, productId: int, quantity: int) -> bool:
         return self.db.insertInto("OrderItem", (None, orderId, productId, quantity))
 
     def deleteOrder(self, **cols) -> bool:
         if len(cols) == 0:
             return False
         return self.db.removeFrom("OrderItem", cols)
-    
+
     def returnOrder(self, **cols) -> list:
         if len(cols) == 0:
             return False
         return self.db.selectFrom("Orderitem", cols)
-    
+
     def amendOrder(self, match: dict, **change) -> bool:
         if len(match) == 0:
             return False
@@ -194,6 +198,31 @@ class orderController():
 
     def returnAllOrders(self) -> list:
         return db.query("SELECT Customer.firstname, CustomerOrder.time, Product.Name, OrderItem.quantity FROM Customer INNER JOIN CustomerOrder ON Customer.CustomerID=CustomerOrder.CustomerID INNER JOIN OrderItem ON CustomerOrder.OrderID=OrderItem.OrderID INNER JOIN Product ON Product.ProductID=OrderItem.ProductID").fetchall()
+
+def newOrder():
+    fname = input("Customer first name: ")
+    lname = input("Customer last name: ")
+    cid = input("Customer ID: ")
+    customer = cc.returnCustomer(firstname=fname, lastname=lname, customerid=cid, col="Customer.CustomerID, Customer.FirstName, Customer.LastName")
+    if len(customer) != 1:
+        print(f"{customer}")
+        print("Found multiple customers. Refine search")
+        newOrder()
+    cid = customer[0][0]
+    now = datetime.now()
+    dt = now.strftime("%Y/%m/%d")
+    tm = now.strftime("%H:%M:%S")
+    products = []
+    while True:
+        pname = input("Product name: ")
+        if len(products) > 0 and len(pname) == 0:
+            break
+        quan = input("Product Quantity: ")
+        if len(pname) != 0 and len(quan) != 0 and int(quan) != 0:
+            products.append({"Name": pname, "quantity": quan})
+    #print(dt, tm, cid, products)
+    oc.newOrder(dt, tm, cid, products)
+
 
 db = dbi("dbs2.sqlite3")
 cc = customerController(db)
