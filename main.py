@@ -24,7 +24,7 @@ class dbi():
         return self.cursor.execute(query, params)
 
     def selectFrom(self, table: str, cond: dict = None, col="*") -> list:
-        if cond is None:
+        if cond is None or cond == {}:
             return self.query(f"SELECT {col} FROM {table}").fetchall()
         match = " AND ".join(
             list(map(lambda a, b: f"{a} = {b.__repr__()}", cond.keys(), cond.values())))
@@ -140,8 +140,6 @@ class productController():
         return self.db.removeFrom("Product", cols)
 
     def returnProduct(self, **cols) -> list:
-        if len(cols) == 0:
-            return False
         return self.db.selectFrom("Product", cols)
 
     def amendProduct(self, match: dict, **change) -> bool:
@@ -158,8 +156,6 @@ class productController():
         return self.db.removeFrom("ProductType", cols)
 
     def returnProductType(self, **cols) -> list:
-        if len(cols) == 0:
-            return False
         return self.db.selectFrom("ProductType", cols)
 
     def amendProductType(self, match: dict, **change) -> bool:
@@ -224,10 +220,25 @@ def newOrder():
         if len(products) > 0 and len(pname) == 0:
             break
         quan = input("Product Quantity: ")
-        if len(pname) != 0 and len(quan) != 0 and int(quan) != 0:
+        if len(pname) != 0 and len(quan) != 0 and int(quan) != 0 and any(pname in p for p in pc.returnProduct()):
             products.append({"Name": pname, "quantity": quan})
     #print(dt, tm, cid, products)
     oc.newOrder(dt, tm, cid, products)
+
+def newProduct():
+    ptypes = pc.returnProductType()
+    for i in ptypes:
+        print(f"{i[0]} - {i[1]}")
+    ptype = int(input("Product Type ID: "))
+    while not any(ptype in pt for pt in ptypes):
+        ptype = int(input("Product Type ID: "))
+    pname = input("Product Name: ")
+    while len(pname) == 0:
+        pname = input("Product Name: ")
+    price = input("Price: ")
+    while len(price) == 0:
+        price = input("Price: ")
+    pc.addProduct(pname, price, ptype)
 
 
 db = dbi("dbs2.sqlite3")
