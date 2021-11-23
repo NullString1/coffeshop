@@ -1,5 +1,7 @@
 import sqlite3
+import subprocess
 from datetime import date, datetime
+from types import TracebackType
 from typing import Iterable
 
 #Run to create db
@@ -240,8 +242,48 @@ def newProduct():
         price = input("Price: ")
     pc.addProduct(pname, price, ptype)
 
+def newProductType():
+    ptypes = pc.returnProductType()
+    for i in ptypes:
+        print(f"{i[0]} - {i[1]}")
+    desc = input("Product Type Description: ")
+    while len(desc) == 0:
+        desc = input("Product Type Description: ")
+    pc.addProductType(desc)
 
 db = dbi("dbs2.sqlite3")
 cc = customerController(db)
 pc = productController(db)
 oc = orderController(db)
+
+try:
+    while True:
+        cmd = input("> ")
+        if cmd[0] == "/":
+            if len(cmd) == 1:
+                while True: 
+                    cmd = input(">> ")
+                    if cmd == "exit":
+                        break
+                    e = eval(cmd)
+                    if e is not None :
+                        print(e)
+            e = eval(cmd)
+            if e is not None :
+                print(e)
+        else:
+            match cmd.lower().replace(" ", "").replace("-", ""):
+                case "newproduct":
+                    newProduct()
+                case "neworder":
+                    newOrder()
+                case "newproducttype":
+                    newProductType()
+                case "shell":
+                    if len(cmd[4:]) != 0:
+                        print(subprocess.check_output(cmd[4:]))
+                case _:
+                    print(f"Unknown command {cmd}\nCommands: new product, new order, new product type, shell, /*")
+except EOFError:
+    pass                    
+        
